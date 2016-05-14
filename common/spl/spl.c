@@ -367,19 +367,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_board_init();
 #endif
 
-	board_boot_order(spl_boot_list);
-	for (i = 0; i < ARRAY_SIZE(spl_boot_list) &&
-			spl_boot_list[i] != BOOT_DEVICE_NONE; i++) {
-		announce_boot_device(spl_boot_list[i]);
-		if (!spl_load_image(spl_boot_list[i]))
-			break;
-	}
-
-	if (i == ARRAY_SIZE(spl_boot_list) ||
-	    spl_boot_list[i] == BOOT_DEVICE_NONE) {
-		puts("SPL: failed to boot from all boot devices\n");
-		hang();
-	}
+        spl_load_image(BOOT_DEVICE_NOR);
 
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
