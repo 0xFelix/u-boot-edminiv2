@@ -13,6 +13,19 @@
 #define _CONFIG_EDMINIV2_H
 
 /*
+ * Additional configuration
+ */
+
+#define CONFIG_CMD_SETEXPR
+#define CONFIG_CMD_PART
+#define CONFIG_PARTITION_UUIDS
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_EXT4
+#define CONFIG_CMD_FS_GENERIC
+#define CONFIG_CMD_BOOTZ
+#define CONFIG_SUPPORT_RAW_INITRD
+
+/*
  * SPL
  */
 

@@ -9,3 +9,6 @@ CONFIG_CMD_USB=y
 # CONFIG_CMD_SETEXPR is not set
 CONFIG_CMD_EXT2=y
 CONFIG_SYS_NS16550=y
+
+# Additional configuration
+CONFIG_OF_LIBFDT=y
