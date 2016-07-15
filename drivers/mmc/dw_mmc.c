@@ -121,7 +121,7 @@ static int dwmci_data_transfer(struct dwmci_host *host, struct mmc_data *data)
 
 		if (host->fifo_mode && size) {
 			if (data->flags == MMC_DATA_READ) {
-				if ((dwmci_readl(host, DWMCI_RINTSTS) &&
+				if ((dwmci_readl(host, DWMCI_RINTSTS) &
 				     DWMCI_INTMSK_RXDR)) {
 					len = dwmci_readl(host, DWMCI_STATUS);
 					len = (len >> DWMCI_FIFO_SHIFT) &
@@ -133,7 +133,7 @@ static int dwmci_data_transfer(struct dwmci_host *host, struct mmc_data *data)
 						     DWMCI_INTMSK_RXDR);
 				}
 			} else {
-				if ((dwmci_readl(host, DWMCI_RINTSTS) &&
+				if ((dwmci_readl(host, DWMCI_RINTSTS) &
 				     DWMCI_INTMSK_TXDR)) {
 					len = dwmci_readl(host, DWMCI_STATUS);
 					len = fifo_depth - ((len >>
@@ -181,9 +181,16 @@ static int dwmci_set_transfer_mode(struct dwmci_host *host,
 	return mode;
 }
 
+#ifdef CONFIG_DM_MMC_OPS
+int dwmci_send_cmd(struct udevice *dev, struct mmc_cmd *cmd,
+		   struct mmc_data *data)
+{
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+#else
 static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		struct mmc_data *data)
 {
+#endif
 	struct dwmci_host *host = mmc->priv;
 	ALLOC_CACHE_ALIGN_BUFFER(struct dwmci_idmac, cur_idmac,
 				 data ? DIV_ROUND_UP(data->blocks, 8) : 0);
@@ -373,8 +380,14 @@ static int dwmci_setup_bus(struct dwmci_host *host, u32 freq)
 	return 0;
 }
 
+#ifdef CONFIG_DM_MMC_OPS
+int dwmci_set_ios(struct udevice *dev)
+{
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+#else
 static void dwmci_set_ios(struct mmc *mmc)
 {
+#endif
 	struct dwmci_host *host = (struct dwmci_host *)mmc->priv;
 	u32 ctype, regs;
 
@@ -405,6 +418,9 @@ static void dwmci_set_ios(struct mmc *mmc)
 
 	if (host->clksel)
 		host->clksel(host);
+#ifdef CONFIG_DM_MMC_OPS
+	return 0;
+#endif
 }
 
 static int dwmci_init(struct mmc *mmc)
@@ -448,33 +464,63 @@ static int dwmci_init(struct mmc *mmc)
 	return 0;
 }
 
+#ifdef CONFIG_DM_MMC_OPS
+int dwmci_probe(struct udevice *dev)
+{
+	struct mmc *mmc = mmc_get_mmc_dev(dev);
+
+	return dwmci_init(mmc);
+}
+
+const struct dm_mmc_ops dm_dwmci_ops = {
+	.send_cmd	= dwmci_send_cmd,
+	.set_ios	= dwmci_set_ios,
+};
+
+#else
 static const struct mmc_ops dwmci_ops = {
 	.send_cmd	= dwmci_send_cmd,
 	.set_ios	= dwmci_set_ios,
 	.init		= dwmci_init,
 };
+#endif
 
+void dwmci_setup_cfg(struct mmc_config *cfg, const char *name, int buswidth,
+		     uint caps, u32 max_clk, u32 min_clk)
+{
+	cfg->name = name;
+#ifndef CONFIG_DM_MMC_OPS
+	cfg->ops = &dwmci_ops;
+#endif
+	cfg->f_min = min_clk;
+	cfg->f_max = max_clk;
+
+	cfg->voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
+
+	cfg->host_caps = caps;
+
+	if (buswidth == 8) {
+		cfg->host_caps |= MMC_MODE_8BIT;
+		cfg->host_caps &= ~MMC_MODE_4BIT;
+	} else {
+		cfg->host_caps |= MMC_MODE_4BIT;
+		cfg->host_caps &= ~MMC_MODE_8BIT;
+	}
+	cfg->host_caps |= MMC_MODE_HS | MMC_MODE_HS_52MHz;
+
+	cfg->b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
+}
+
+#ifdef CONFIG_BLK
+int dwmci_bind(struct udevice *dev, struct mmc *mmc, struct mmc_config *cfg)
+{
+	return mmc_bind(dev, mmc, cfg);
+}
+#else
 int add_dwmci(struct dwmci_host *host, u32 max_clk, u32 min_clk)
 {
-	host->cfg.name = host->name;
-	host->cfg.ops = &dwmci_ops;
-	host->cfg.f_min = min_clk;
-	host->cfg.f_max = max_clk;
-
-	host->cfg.voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
-
-	host->cfg.host_caps = host->caps;
-
-	if (host->buswidth == 8) {
-		host->cfg.host_caps |= MMC_MODE_8BIT;
-		host->cfg.host_caps &= ~MMC_MODE_4BIT;
-	} else {
-		host->cfg.host_caps |= MMC_MODE_4BIT;
-		host->cfg.host_caps &= ~MMC_MODE_8BIT;
-	}
-	host->cfg.host_caps |= MMC_MODE_HS | MMC_MODE_HS_52MHz;
-
-	host->cfg.b_max = CONFIG_SYS_MMC_MAX_BLK_COUNT;
+	dwmci_setup_cfg(&host->cfg, host->name, host->buswidth, host->caps,
+			max_clk, min_clk);
 
 	host->mmc = mmc_create(&host->cfg, host);
 	if (host->mmc == NULL)
@@ -482,3 +528,4 @@ int add_dwmci(struct dwmci_host *host, u32 max_clk, u32 min_clk)
 
 	return 0;
 }
+#endif

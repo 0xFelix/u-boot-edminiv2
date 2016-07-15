@@ -2,7 +2,7 @@ menu "MMC Host controller Support"
 
 config MMC
 	bool "Enable MMC support"
-	depends on ARCH_SUNXI
+	depends on ARCH_SUNXI || SANDBOX
 	help
 	  TODO: Move all architectures to use this option
 
@@ -16,9 +16,18 @@ config DM_MMC
 	  appear as block devices in U-Boot and can support filesystems such
 	  as EXT4 and FAT.
 
+config DM_MMC_OPS
+	bool "Support MMC controller operations using Driver Model"
+	depends on DM_MMC
+	help
+	  Driver model provides a means of supporting device operations. This
+	  option moves MMC operations under the control of driver model. The
+	  option will be removed as soon as all DM_MMC drivers use it, as it
+	  will the only supported behaviour.
+
 config MSM_SDHCI
 	bool "Qualcomm SDHCI controller"
-	depends on DM_MMC
+	depends on DM_MMC && BLK && DM_MMC_OPS
 	help
 	  Enables support for SDHCI 2.0 controller present on some Qualcomm
           Snapdragon devices. This device is compatible with eMMC v4.5 and
@@ -57,5 +66,14 @@ config MMC_UNIPHIER
 	depends on ARCH_UNIPHIER
 	help
 	  This selects support for the SD/MMC Host Controller on UniPhier SoCs.
+
+config SANDBOX_MMC
+	bool "Sandbox MMC support"
+	depends on MMC && SANDBOX
+	help
+	  This select a dummy sandbox MMC driver. At present this does nothing
+	  other than allow sandbox to be build with MMC support. This
+	  improves build coverage for sandbox and makes it easier to detect
+	  MMC build errors with sandbox.
 
 endmenu

@@ -10,6 +10,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <fdtdec.h>
 #include <fdt_support.h>
 #include <malloc.h>
@@ -26,9 +27,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int device_bind(struct udevice *parent, const struct driver *drv,
-		const char *name, void *platdata, int of_offset,
-		struct udevice **devp)
+static int device_bind_common(struct udevice *parent, const struct driver *drv,
+			      const char *name, void *platdata,
+			      ulong driver_data, int of_offset,
+			      struct udevice **devp)
 {
 	struct udevice *dev;
 	struct uclass *uc;
@@ -56,6 +58,7 @@ int device_bind(struct udevice *parent, const struct driver *drv,
 	INIT_LIST_HEAD(&dev->devres_head);
 #endif
 	dev->platdata = platdata;
+	dev->driver_data = driver_data;
 	dev->name = name;
 	dev->of_offset = of_offset;
 	dev->parent = parent;
@@ -191,6 +194,23 @@ fail_alloc1:
 	free(dev);
 
 	return ret;
+}
+
+int device_bind_with_driver_data(struct udevice *parent,
+				 const struct driver *drv, const char *name,
+				 ulong driver_data, int of_offset,
+				 struct udevice **devp)
+{
+	return device_bind_common(parent, drv, name, NULL, driver_data,
+				  of_offset, devp);
+}
+
+int device_bind(struct udevice *parent, const struct driver *drv,
+		const char *name, void *platdata, int of_offset,
+		struct udevice **devp)
+{
+	return device_bind_common(parent, drv, name, platdata, 0, of_offset,
+				  devp);
 }
 
 int device_bind_by_name(struct udevice *parent, bool pre_reloc_only,
@@ -657,8 +677,8 @@ fdt_addr_t dev_get_addr_name(struct udevice *dev, const char *name)
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 	int index;
 
-	index = fdt_find_string(gd->fdt_blob, dev->parent->of_offset,
-				"reg-names", name);
+	index = fdt_find_string(gd->fdt_blob, dev->of_offset, "reg-names",
+				name);
 	if (index < 0)
 		return index;
 
@@ -676,6 +696,16 @@ fdt_addr_t dev_get_addr(struct udevice *dev)
 void *dev_get_addr_ptr(struct udevice *dev)
 {
 	return (void *)(uintptr_t)dev_get_addr_index(dev, 0);
+}
+
+void *dev_map_physmem(struct udevice *dev, unsigned long size)
+{
+	fdt_addr_t addr = dev_get_addr(dev);
+
+	if (addr == FDT_ADDR_T_NONE)
+		return NULL;
+
+	return map_physmem(addr, size, MAP_NOCACHE);
 }
 
 bool device_has_children(struct udevice *dev)
@@ -706,12 +736,32 @@ bool device_is_last_sibling(struct udevice *dev)
 	return list_is_last(&dev->sibling_node, &parent->child_head);
 }
 
+void device_set_name_alloced(struct udevice *dev)
+{
+	dev->flags |= DM_NAME_ALLOCED;
+}
+
 int device_set_name(struct udevice *dev, const char *name)
 {
 	name = strdup(name);
 	if (!name)
 		return -ENOMEM;
 	dev->name = name;
+	device_set_name_alloced(dev);
 
 	return 0;
+}
+
+bool of_device_is_compatible(struct udevice *dev, const char *compat)
+{
+	const void *fdt = gd->fdt_blob;
+
+	return !fdt_node_check_compatible(fdt, dev->of_offset, compat);
+}
+
+bool of_machine_is_compatible(const char *compat)
+{
+	const void *fdt = gd->fdt_blob;
+
+	return !fdt_node_check_compatible(fdt, 0, compat);
 }

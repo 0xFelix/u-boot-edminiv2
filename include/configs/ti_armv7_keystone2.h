@@ -89,6 +89,10 @@
 #define CONFIG_SYS_SPI2
 #define CONFIG_SYS_SPI2_BASE		KS2_SPI2_BASE
 #define CONFIG_SYS_SPI2_NUM_CS		4
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_DM_SPI
+#undef CONFIG_DM_SPI_FLASH
+#endif
 
 /* Network Configuration */
 #define CONFIG_PHYLIB
@@ -191,8 +195,6 @@
 					"-(ubifs)"
 
 /* USB Configuration */
-#define CONFIG_USB_XHCI
-#define CONFIG_USB_XHCI_DWC3
 #define CONFIG_USB_XHCI_KEYSTONE
 #define CONFIG_SYS_USB_XHCI_MAX_ROOT_PORTS	2
 #define CONFIG_USB_STORAGE
@@ -247,7 +249,6 @@
 	"tftp_root=/\0"							\
 	"nfs_root=/export\0"						\
 	"mem_lpae=1\0"							\
-	"mem_reserve=512M\0"						\
 	"addr_ubi=0x82000000\0"						\
 	"addr_secdb_key=0xc000000\0"					\
 	"name_kern=zImage\0"						\

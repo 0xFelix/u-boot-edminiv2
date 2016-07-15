@@ -132,7 +132,6 @@
         65536, 65536, 65536, 65536, 65536, 65536, 65536}
 
 /* auto boot */
-#define CONFIG_BOOTDELAY	3	/* default enable autoboot */
 
 /*
  * For booting Linux, the board info and command line data
