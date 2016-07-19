@@ -511,7 +511,7 @@ The following options need to be configured:
 		implemetation.
 
 		CONFIG_SYS_FSL_DDR2
-		Board config to use DDR2. It can be eanbeld for SoCs with
+		Board config to use DDR2. It can be enabled for SoCs with
 		Freescale DDR2 or DDR3 controllers, depending on the board
 		implementation.
 
@@ -3834,9 +3834,6 @@ Configuration Settings:
 		is not available. free() is supported but does nothing.
 		The memory will be freed (or in fact just forgotten) when
 		U-Boot relocates itself.
-
-		Pre-relocation malloc() is only supported on ARM and sandbox
-		at present but is fairly easy to enable for other archs.
 
 - CONFIG_SYS_MALLOC_SIMPLE
 		Provides a simple and small malloc() and calloc() for those

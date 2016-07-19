@@ -13,7 +13,6 @@
 #include <nand.h>
 #include <fat.h>
 #include <version.h>
-#include <i2c.h>
 #include <image.h>
 #include <malloc.h>
 #include <dm/root.h>
@@ -203,7 +202,7 @@ int spl_init(void)
 	gd->malloc_limit = CONFIG_SYS_MALLOC_F_LEN;
 	gd->malloc_ptr = 0;
 #endif
-	if (CONFIG_IS_ENABLED(OF_CONTROL)) {
+	if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) {
 		ret = fdtdec_setup();
 		if (ret) {
 			debug("fdtdec_setup() returned error %d\n", ret);
@@ -211,7 +210,8 @@ int spl_init(void)
 		}
 	}
 	if (IS_ENABLED(CONFIG_SPL_DM)) {
-		ret = dm_init_and_scan(true);
+		/* With CONFIG_OF_PLATDATA, bring in all devices */
+		ret = dm_init_and_scan(!CONFIG_IS_ENABLED(OF_PLATDATA));
 		if (ret) {
 			debug("dm_init_and_scan() returned error %d\n", ret);
 			return ret;
@@ -270,7 +270,7 @@ struct boot_device_name boot_name_table[] = {
 #ifdef CONFIG_SPL_YMODEM_SUPPORT
 	{ BOOT_DEVICE_UART, "UART" },
 #endif
-#ifdef CONFIG_SPL_SPI_SUPPORT
+#if defined(CONFIG_SPL_SPI_SUPPORT) || defined(CONFIG_SPL_SPI_FLASH_SUPPORT)
 	{ BOOT_DEVICE_SPI, "SPI" },
 #endif
 #ifdef CONFIG_SPL_ETH_SUPPORT
@@ -346,7 +346,7 @@ static int spl_load_image(u32 boot_device)
 	case BOOT_DEVICE_UART:
 		return spl_ymodem_load_image();
 #endif
-#ifdef CONFIG_SPL_SPI_SUPPORT
+#if defined(CONFIG_SPL_SPI_SUPPORT) || defined(CONFIG_SPL_SPI_FLASH_SUPPORT)
 	case BOOT_DEVICE_SPI:
 		return spl_spi_load_image();
 #endif
