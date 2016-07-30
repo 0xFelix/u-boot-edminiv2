@@ -56,6 +56,15 @@ __weak int spl_start_uboot(void)
 	puts("SPL: Direct Linux boot not active!\n");
 	return 1;
 }
+
+/*
+ * Weak default function for arch specific zImage check. Return zero
+ * and fill start and end address if image is recognized.
+ */
+int __weak bootz_setup(ulong image, ulong *start, ulong *end)
+{
+	 return 1;
+}
 #endif
 
 /*
@@ -124,6 +133,20 @@ int spl_parse_image_header(const struct image_header *header)
 		/* Signature not found, proceed to other boot methods. */
 		return -EINVAL;
 #else
+#ifdef CONFIG_SPL_OS_BOOT
+		ulong start, end;
+
+		if (!bootz_setup((ulong)header, &start, &end)) {
+			spl_image.name = "Linux";
+			spl_image.os = IH_OS_LINUX;
+			spl_image.load_addr = CONFIG_SYS_LOAD_ADDR;
+			spl_image.entry_point = CONFIG_SYS_LOAD_ADDR;
+			spl_image.size = end - start;
+			debug("spl: payload zImage, load addr: 0x%x size: %d\n",
+			      spl_image.load_addr, spl_image.size);
+			return 0;
+		}
+#endif
 		/* Signature not found - assume u-boot.bin */
 		debug("mkimage signature not found - ih_magic = %x\n",
 			header->ih_magic);
@@ -330,6 +353,11 @@ static int spl_load_image(u32 boot_device)
 	case BOOT_DEVICE_MMC2_2:
 		return spl_mmc_load_image(boot_device);
 #endif
+#ifdef CONFIG_SPL_UBI
+	case BOOT_DEVICE_NAND:
+	case BOOT_DEVICE_ONENAND:
+		return spl_ubi_load_image(boot_device);
+#else
 #ifdef CONFIG_SPL_NAND_SUPPORT
 	case BOOT_DEVICE_NAND:
 		return spl_nand_load_image();
@@ -337,6 +365,7 @@ static int spl_load_image(u32 boot_device)
 #ifdef CONFIG_SPL_ONENAND_SUPPORT
 	case BOOT_DEVICE_ONENAND:
 		return spl_onenand_load_image();
+#endif
 #endif
 #ifdef CONFIG_SPL_NOR_SUPPORT
 	case BOOT_DEVICE_NOR:

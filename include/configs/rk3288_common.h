@@ -33,7 +33,12 @@
 #define CONFIG_SYS_NS16550_MEM32
 #define CONFIG_SPL_BOARD_INIT
 
+#ifdef CONFIG_ROCKCHIP_SPL_BACK_TO_BROM
+/* Bootrom will load u-boot binary to 0x0 once return from SPL */
+#define CONFIG_SYS_TEXT_BASE		0x00000000
+#else
 #define CONFIG_SYS_TEXT_BASE		0x00100000
+#endif
 #define CONFIG_SYS_INIT_SP_ADDR		0x00100000
 #define CONFIG_SYS_LOAD_ADDR		0x00800800
 #define CONFIG_SPL_STACK		0xff718000
@@ -78,6 +83,32 @@
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI
 #define CONFIG_SF_DEFAULT_SPEED 20000000
+
+/* usb otg */
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_GADGET_DWC2_OTG
+#define CONFIG_ROCKCHIP_USB2_PHY
+#define CONFIG_USB_GADGET_VBUS_DRAW	0
+
+/* fastboot  */
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_USB_FUNCTION_FASTBOOT
+#define CONFIG_FASTBOOT_FLASH
+#define CONFIG_FASTBOOT_FLASH_MMC_DEV	1	/* eMMC */
+/* stroe safely fastboot buffer data to the middle of bank */
+#define CONFIG_FASTBOOT_BUF_ADDR	(CONFIG_SYS_SDRAM_BASE \
+					+ SDRAM_BANK_SIZE / 2)
+#define CONFIG_FASTBOOT_BUF_SIZE	0x08000000
+
+#define CONFIG_USB_GADGET_DOWNLOAD
+#define CONFIG_G_DNL_MANUFACTURER	"Rockchip"
+#define CONFIG_G_DNL_VENDOR_NUM		0x2207
+#define CONFIG_G_DNL_PRODUCT_NUM	0x320a
+
+/* Enable gpt partition table */
+#define CONFIG_CMD_GPT
+#define CONFIG_EFI_PARTITION
 
 #ifndef CONFIG_SPL_BUILD
 #include <config_distro_defaults.h>

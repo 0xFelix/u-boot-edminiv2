@@ -9,7 +9,6 @@
 #ifndef __CONFIG_UNIPHIER_COMMON_H__
 #define __CONFIG_UNIPHIER_COMMON_H__
 
-#define CONFIG_I2C_EEPROM
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS  10
 
 #define CONFIG_SMC911X
@@ -225,7 +224,6 @@
 		"tftpboot $fdt_addr_r $fdt_file &&" \
 		"run boot_common\0" \
 	"__nfsboot=tftpboot $kernel_addr_r $bootfile &&" \
-		"tftpboot $fdt_addr_r $fdt_file &&" \
 		"tftpboot $fdt_addr_r $fdt_file &&" \
 		"setenv ramdisk_addr_r - &&" \
 		"run boot_common\0"

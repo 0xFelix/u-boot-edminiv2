@@ -840,6 +840,9 @@ The following options need to be configured:
 			CONFIG_CONSOLE_EXTRA_INFO
 						additional board info beside
 						the logo
+			CONFIG_HIDE_LOGO_VERSION
+						do not display bootloader
+						version string
 
 		When CONFIG_CFB_CONSOLE_ANSI is defined, console will support
 		a limited number of ANSI escape sequences (cursor control,
@@ -3583,6 +3586,10 @@ FIT uImage format:
 		Support for NAND boot using simple NAND drivers that
 		expose the cmd_ctrl() interface.
 
+		CONFIG_SPL_UBI
+		Support for a lightweight UBI (fastmap) scanner and
+		loader
+
 		CONFIG_SPL_MTD_SUPPORT
 		Support for the MTD subsystem within SPL.  Useful for
 		environment on NAND support within SPL.
@@ -4807,7 +4814,7 @@ Low Level (hardware related) configuration options:
 
 - CONFIG_SKIP_LOWLEVEL_INIT_ONLY
 		[ARM926EJ-S only] This allows just the call to lowlevel_init()
-		to be skipped. The normal CPU15 init (such as enabling the
+		to be skipped. The normal CP15 init (such as enabling the
 		instruction cache) is still performed.
 
 - CONFIG_SPL_BUILD

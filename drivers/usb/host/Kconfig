@@ -74,6 +74,22 @@ config USB_EHCI_MX6
 	---help---
 	  Enables support for the on-chip EHCI controller on i.MX6 SoCs.
 
+config USB_EHCI_MX7
+	bool "Support for i.MX7 on-chip EHCI USB controller"
+	depends on ARCH_MX7
+	default y
+	---help---
+	  Enables support for the on-chip EHCI controller on i.MX7 SoCs.
+
+if USB_EHCI_MX7
+
+config MXC_USB_OTG_HACTIVE
+	bool "USB Power pin high active"
+	---help---
+	  Set the USB Power pin polarity to be high active (PWR_POL)
+
+endif
+
 config USB_EHCI_MSM
 	bool "Support for Qualcomm on-chip EHCI USB controller"
 	depends on DM_USB
@@ -84,6 +100,13 @@ config USB_EHCI_MSM
 	  Snapdragon SoCs.
 	  This driver supports combination of Chipidea USB controller
 	  and Synapsys USB PHY in host mode only.
+
+config USB_EHCI_ZYNQ
+	bool "Support for Xilinx Zynq on-chip EHCI USB controller"
+	depends on ARCH_ZYNQ
+	default y
+	---help---
+	  Enable support for Zynq on-chip EHCI USB controller
 
 config USB_EHCI_GENERIC
 	bool "Support for generic EHCI USB controller"

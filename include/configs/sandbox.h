@@ -27,7 +27,10 @@
 
 #define CONFIG_SYS_STDIO_DEREGISTER
 
-/* Number of bits in a C 'long' on this architecture */
+/*
+ * Number of bits in a C 'long' on this architecture. Set this to 32 when
+ * building on a 32-bit machine.
+ */
 #define CONFIG_SANDBOX_BITS_PER_LONG	64
 
 #define CONFIG_LMB
@@ -82,7 +85,6 @@
 #define CONFIG_CMD_SF_TEST
 
 #define CONFIG_I2C_EDID
-#define CONFIG_I2C_EEPROM
 
 /* Memory things - we don't really want a memory test */
 #define CONFIG_SYS_LOAD_ADDR		0x00000000

@@ -149,7 +149,7 @@ static int configure_emmc(struct udevice *pinctrl)
 	return 0;
 }
 #endif
-
+extern void back_to_bootrom(void);
 void board_init_f(ulong dummy)
 {
 	struct udevice *pinctrl;
@@ -187,7 +187,7 @@ void board_init_f(ulong dummy)
 	rockchip_timer_init();
 	configure_l2ctlr();
 
-	ret = uclass_get_device(UCLASS_CLK, 0, &dev);
+	ret = rockchip_get_clk(&dev);
 	if (ret) {
 		debug("CLK init failed: %d\n", ret);
 		return;
@@ -204,6 +204,9 @@ void board_init_f(ulong dummy)
 		debug("DRAM init failed: %d\n", ret);
 		return;
 	}
+#ifdef CONFIG_ROCKCHIP_SPL_BACK_TO_BROM
+	back_to_bootrom();
+#endif
 }
 
 static int setup_led(void)
@@ -248,7 +251,8 @@ void spl_board_init(void)
 	}
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	if (!IS_ENABLED(CONFIG_TARGET_ROCK2) &&
-	    !IS_ENABLED(CONFIG_TARGET_FIREFLY_RK3288)) {
+	    !IS_ENABLED(CONFIG_TARGET_FIREFLY_RK3288) &&
+	    !IS_ENABLED(CONFIG_TARGET_EVB_RK3288)) {
 		ret = pinctrl_request_noflags(pinctrl, PERIPH_ID_SDCARD);
 		if (ret) {
 			debug("%s: Failed to set up SD card\n", __func__);
